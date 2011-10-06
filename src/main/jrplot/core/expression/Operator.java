@@ -7,12 +7,39 @@ package jrplot.core.expression;
  * @author rodrigo
  *
  */
-enum Operator implements ExpressionElement {
+enum Operator implements Evaluable {
 
-	ADDITION("+", false, 2, false),
-	SUBTRACTION("-", false, 2, false),
-	MULTIPLICATION("*", false, 1, false),
-	DIVISION("/", false, 1, false);
+	ADDITION("+", false, 3, false) {
+		@Override
+		public double evaluate(double a, double b) throws ExpressionException {
+			return a + b;
+		}
+	},
+	SUBTRACTION("-", false, 3, false) {
+		@Override
+		public double evaluate(double a, double b) throws ExpressionException {
+			return a - b;
+		}
+	},
+	MULTIPLICATION("*", false, 2, false) {
+		@Override
+		public double evaluate(double a, double b) throws ExpressionException {
+			return a * b;
+		}
+	},
+	DIVISION("/", false, 2, false) {
+		@Override
+		public double evaluate(double a, double b) throws ExpressionException {
+			return a / b;
+		}
+	},
+	EXPONENTIATION("^", false, 1, false) {
+		@Override
+		public double evaluate(double a, double b) throws ExpressionException {
+			return Math.pow(a, b);
+		}
+	}
+	;
 	
 	private String symbol;
 	private boolean unary;
@@ -79,23 +106,24 @@ enum Operator implements ExpressionElement {
 		return unary;
 	}
 	
-	/**
+	/*
+	 * (non-Javadoc)
 	 * Must be ovewriten by instances that represent unary operations.
-	 * @param a
-	 * @return
+	 * 
+	 * @see jrplot.core.expression.Evaluable#evaluate(double)
 	 */
-	double evaluate(double a) {
-		throw new RuntimeException("Function body not implemented");
+	public double evaluate(double a) throws ExpressionException {
+		throw new ExpressionException("Function body not implemented");
 	}
 	
-	/**
+	/*
+	 * (non-Javadoc)
 	 * Must be ovewriten by instances that represent binary operations.
-	 * @param a
-	 * @param b
-	 * @return
+	 *  
+	 * @see jrplot.core.expression.Evaluable#evaluate(double, double)
 	 */
-	double evaluate(double a, double b) {
-		throw new RuntimeException("Function body not implemented");
+	public double evaluate(double a, double b) throws ExpressionException {
+		throw new ExpressionException("Function body not implemented");
 	}
 	
 	@Override

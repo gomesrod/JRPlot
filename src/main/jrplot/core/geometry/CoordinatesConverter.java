@@ -53,35 +53,46 @@ public class CoordinatesConverter {
 	private double logicalYBoundMax;
 	private double screenWidth;
 	private double screenHeigth;
+	private double screenPadding;
 	
 	/**
 	 * Sets the cartesian coordinate bounds. This object will be able to use the space:
 	 * 
-	 *                ^ yBound
+	 *                ^ maxY
 	 *                |
-	 *   -xBound  <-------> xBound
+	 *      minX  <-------> maxX
 	 *                |
-	 *                v -yBound
+	 *                v maxY
 	 * 
 	 * A call to this method is required before any calculation, as long as the screen space
-	 * are proportional to the total cartesian space.
+	 * is proportional to the total cartesian space.
 	 * 
-	 * @param xBound
-	 * @param yBound
+	 * @param minX
+	 * @param maxX
+	 * @param minY
+	 * @param maxY
 	 * @return
 	 */
-	public CoordinatesConverter logicalBounds(double xBound, double yBound) {
-		logicalXBoundMin = - xBound;
-		logicalYBoundMin = - yBound;
-		logicalXBoundMax = xBound;
-		logicalYBoundMax = yBound;
+	public CoordinatesConverter logicalBounds(double minX, double maxX, double minY, double maxY) {
+		logicalXBoundMin = minX;
+		logicalYBoundMin = minY;
+		logicalXBoundMax = maxX;
+		logicalYBoundMax = maxY;
 		
 		return this;
 	}
 
-	public CoordinatesConverter screenSize(double width, double heigth) {
+	/**
+	 * 
+	 * @param width
+	 * @param heigth
+	 * @param padding
+	 * @return
+	 */
+	public CoordinatesConverter screenSize(double width, double heigth, double padding) {
 		screenWidth = width;
 		screenHeigth = heigth;
+		screenPadding = padding;
 		return this;
 	}
 
@@ -102,8 +113,10 @@ public class CoordinatesConverter {
 		double cartAxisHeigth = Math.abs(logicalYBoundMin) + Math.abs(logicalYBoundMax);
 		
 		// Gets the proportional screen distances
-		double xScreenDist = (xDist * screenWidth) / cartAxisWidth;
-		double yScreenDist = (yDist * screenHeigth) / cartAxisHeigth;
+		double drawableWidth = screenWidth - (2 * screenPadding);
+		double drawableHeigth = screenHeigth - (2 * screenPadding);
+		double xScreenDist = ((xDist * drawableWidth) / cartAxisWidth) + screenPadding;
+		double yScreenDist = ((yDist * drawableHeigth) / cartAxisHeigth) + screenPadding;
 		
 		return new Pair(xScreenDist, yScreenDist);
 	}

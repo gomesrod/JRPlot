@@ -6,14 +6,14 @@ package jrplot.core.expression;
  *
  */
 class Variable implements ExpressionElement {
-	final double innerValue;
+	final String name;
 
-	public Variable(double innerValue) {
-		this.innerValue = innerValue;
+	public Variable(String name) {
+		this.name = name;
 	}
 
 	@Override
 	public String toString() {
-		return String.valueOf(innerValue);
+		return name;
 	}
 }

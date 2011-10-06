@@ -46,6 +46,13 @@ public class Expression {
 				double val = Double.parseDouble(tok);
 				outputQueue.offer(new Value(val));
 
+			// Note: Variables and constants are also numbers
+			} else if (tok.length() == 1 && Character.isLetter(tok.charAt(0))) {
+				outputQueue.offer(new Variable(tok));
+			
+			} else if (MathConstants.isValid(tok)) {
+				outputQueue.offer(MathConstants.findByName(tok));
+				
 			/*
 			 * If the token is a function token, then push it onto the stack.
 			 */
@@ -76,14 +83,16 @@ public class Expression {
 			 *   or o1 is right-associative and its precedence is less than that of o2,
 			 * --- pop o2 off the stack, onto the output queue;
 			 * - push o1 onto the stack.
+			 * 
+			 * note: In our code, smaller precedence values mean HIGHER precedence, or higher priority.
 			 */
 			} else if (Operator.isValid(tok)) {
 				Operator o1 = Operator.findBySymbol(tok);
 				
 				while (!auxStack.isEmpty() && Operator.isValid(auxStack.peek())) {
 					Operator o2 = Operator.findBySymbol(auxStack.peek());
-					if ((!o1.isRightAssociative() && o1.getPrecedence() <= o2.getPrecedence())
-							|| (o1.isRightAssociative() && o1.getPrecedence() < o2.getPrecedence())) {
+					if ((!o1.isRightAssociative() && o1.getPrecedence() >= o2.getPrecedence())
+							|| (o1.isRightAssociative() && o1.getPrecedence() > o2.getPrecedence())) {
 						auxStack.pop();
 						outputQueue.offer(o2);
 					} else {
@@ -108,7 +117,6 @@ public class Expression {
 			 * - If the token at the top of the stack is a function token, pop it onto the output queue.
 			 * - If the stack runs out without finding a left parenthesis, then there are mismatched parentheses.
 			 * 
-			 * /TODO: Handle the difference between a "function token" and a "valid function token"
 			 */
 			} else if (tok.equals(")")) {
 				try {
@@ -117,13 +125,16 @@ public class Expression {
 					}
 				} catch (EmptyStackException e) {
 					throw new ExpressionException(
-						"Malformed expression. Mismatched parenthesis.");
+						"Malformed expression. Unbalanced parenthesis.");
 				}
 				
 				auxStack.pop();
-				if (Function.isValidFunction(auxStack.peek())) {
+				if (!auxStack.isEmpty() && Function.isValidFunction(auxStack.peek())) {
 					outputQueue.add(Function.findByName(auxStack.pop()));
 				}
+			
+			} else {
+				throw new ExpressionException("Unrecognized token: " + tok);
 			}
 		}
 		
@@ -141,9 +152,70 @@ public class Expression {
 		return exp;
 	}
 
+	/**
+	 * Evaluates the current expression, replacing the variable "x" (if present) with
+	 * the supplied value.
+	 * 
+	 * @param x Value of the "x" variable. If this variable is not part of the expression,
+	 * the value is ignored.
+	 *  
+	 * @return
+	 * @throws ExpressionException 
+	 */
+	public double evaluate(double x) throws ExpressionException {
+		Stack<Double> valStack = new Stack<Double>();
+		
+		Queue<ExpressionElement> workingQueue = new LinkedList<ExpressionElement>(this.expressionElements);
+		while(!workingQueue.isEmpty()) {
+			ExpressionElement el = workingQueue.poll();
+			
+			if (el instanceof Value) {
+				valStack.add(((Value)el).innerValue);
+				
+			} else if (el instanceof Variable) {
+				Variable var = (Variable) el;				
+				if ("x".equalsIgnoreCase(var.name)) {
+					valStack.add(x);
+				} else {
+					throw new ExpressionException("Unrecognized variable: " + var.name);
+				}
+				
+			} else if (el instanceof MathConstants) {
+				valStack.add(((MathConstants)el).value);
+				
+			} else if (el instanceof Evaluable) {
+				Evaluable eval = (Evaluable) el;
+				double res;
+				
+				try {
+					if (eval.isUnary()) {
+						res = eval.evaluate(valStack.pop());
+					} else {
+						double b = valStack.pop();
+						double a = valStack.pop();
+						res = eval.evaluate(a, b);
+					}
+				} catch (EmptyStackException e) {
+					throw new ExpressionException("Malformed expression");
+				}
+				
+				valStack.push(res);
+			}
+		}
+		
+		double finalResult = valStack.pop();
+		
+		if (!valStack.isEmpty()) {
+			throw new ExpressionException("Malformed expression");
+		}
+		
+		return finalResult;
+		
+	}
+	
 	private static boolean isNumber(String tok) throws ExpressionException {
 		char firstChar = tok.charAt(0);
-		if (!Character.isDigit(firstChar) && firstChar != '-') {
+		if (!Character.isDigit(firstChar) && (firstChar != '-' || tok.length() == 1)) {
 			return false;
 		}
 		try {

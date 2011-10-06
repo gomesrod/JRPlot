@@ -19,7 +19,7 @@ public class JPlotUI extends JPanel {
 
 	private static final long serialVersionUID = -1087720068051295101L;
 
-	private static final Dimension PREFERRED_SIZE = new Dimension(300, 200);
+	private static final Dimension PREFERRED_SIZE = new Dimension(500, 300);
 	
 	private static final String PLOTAREA_LAYOUT_KEY = "plottingArea";
 	private static final String FUNCTIONINPUT_LAYOUT_KEY = "functionInput";

@@ -2,14 +2,92 @@ package jrplot.core.expression;
 
 
 /**
- * Represents a mathematical function.
+ * Contains the basic math functions.
  *  
  * @author rodrigo
  *
  */
-enum Function implements ExpressionElement {
+enum Function implements Evaluable {
 
-	ABS(true);
+	ABS(true) {
+		@Override
+		public double evaluate(double a) throws ExpressionException {
+			return Math.abs(a);
+		}
+	},
+	ACOS(true) {
+		@Override
+		public double evaluate(double a) throws ExpressionException {
+			return Math.acos(a);
+		}
+	},
+	ASIN(true) {
+		@Override
+		public double evaluate(double a) throws ExpressionException {
+			return Math.asin(a);
+		}
+	},
+	ATAN(true) {
+		@Override
+		public double evaluate(double a) throws ExpressionException {
+			return Math.atan(a);
+		}
+	},
+	COS(true) {
+		@Override
+		public double evaluate(double a) throws ExpressionException {
+			return Math.cos(a);
+		}
+	},
+	EXP(true) {
+		@Override
+		public double evaluate(double a) throws ExpressionException {
+			return Math.exp(a);
+		}
+	},
+	LOG(true) {
+		@Override
+		public double evaluate(double a) throws ExpressionException {
+			return Math.log(a);
+		}
+	},
+	LOGTEN(true) {
+		@Override
+		public double evaluate(double a) throws ExpressionException {
+			return Math.log10(a);
+		}
+	},
+	MIN(false) {
+		@Override
+		public double evaluate(double a, double b) throws ExpressionException {
+			return Math.min(a, b);
+		}
+	},
+	MAX(false) {
+		@Override
+		public double evaluate(double a, double b) throws ExpressionException {
+			return Math.max(a, b);
+		}
+	},
+	SIN(true) {
+		@Override
+		public double evaluate(double a) throws ExpressionException {
+			return Math.sin(a);
+		}
+	},
+	SQRT(true) {
+		@Override
+		public double evaluate(double a) throws ExpressionException {
+			return Math.sqrt(a);
+		}
+	},
+	TAN(true) {
+		@Override
+		public double evaluate(double a) throws ExpressionException {
+			return Math.tan(a);
+		}
+	}
+	;
 	
 	private boolean unary;
 
@@ -58,22 +136,23 @@ enum Function implements ExpressionElement {
 		return unary;
 	}
 	
-	/**
+	/*
+	 * (non-Javadoc)
 	 * Must be ovewriten by instances that represent unary operations.
-	 * @param a
-	 * @return
+	 * 
+	 * @see jrplot.core.expression.Evaluable#evaluate(double)
 	 */
-	double evaluate(double a) {
-		throw new RuntimeException("Function body not implemented");
+	public double evaluate(double a) throws ExpressionException {
+		throw new ExpressionException("Function body not implemented");
 	}
 	
-	/**
+	/*
+	 * (non-Javadoc)
 	 * Must be ovewriten by instances that represent binary operations.
-	 * @param a
-	 * @param b
-	 * @return
+	 *  
+	 * @see jrplot.core.expression.Evaluable#evaluate(double, double)
 	 */
-	double evaluate(double a, double b) {
-		throw new RuntimeException("Function body not implemented");
+	public double evaluate(double a, double b) throws ExpressionException {
+		throw new ExpressionException("Function body not implemented");
 	}
 }

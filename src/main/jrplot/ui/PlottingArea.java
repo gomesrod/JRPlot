@@ -20,10 +20,13 @@ import jrplot.core.geometry.CoordinatesConverter;
 public class PlottingArea extends JComponent {
 
 	private static final long serialVersionUID = 8064542678184519324L;
+	
+	private static final double PLOTTING_AREA_PADDING = 6.0;
+	
 	private PlotEngine engine;
 	private JPlotUI controller;
 	private CoordinatesConverter converter;
-
+	
 	public PlottingArea(PlotEngine engine, JPlotUI controller) {
 		this.engine = engine;
 		this.controller = controller;
@@ -40,7 +43,7 @@ public class PlottingArea extends JComponent {
 		paintBackground(g2d);
 		renderButton(g2d);
 		drawAxis(g2d);
-		plotFunction(g2d);
+		drawFunction(g2d);
 	}
 	
 	/**
@@ -66,27 +69,28 @@ public class PlottingArea extends JComponent {
 	private void drawAxis(Graphics2D g2d) {
 		g2d.setColor(Color.GRAY);
 		
-		converter.logicalBounds(engine.currentMaxXBound(), engine.currentMaxYBound());
-		converter.screenSize(this.getWidth(), this.getHeight());
+		converter.logicalBounds(engine.currentMinX(), engine.currentMaxX(), 
+								engine.currentMinY(), engine.currentMaxY());
+		converter.screenSize(this.getWidth(), this.getHeight(), PLOTTING_AREA_PADDING);
 		
 		Pair xAxisBegin = converter.toScreenCoordinate(
-				new Pair(engine.currentMinXBound(), 0.0));
+				new Pair(engine.currentMinX(), 0.0));
 		Pair xAxisEnd = converter.toScreenCoordinate(
-				new Pair(engine.currentMaxXBound(), 0.0));
+				new Pair(engine.currentMaxX(), 0.0));
 		
 		Pair yAxisBegin = converter.toScreenCoordinate(
-				new Pair(0.0, engine.currentMinYBound()));
+				new Pair(0.0, engine.currentMinY()));
 		Pair yAxisEnd = converter.toScreenCoordinate(
-				new Pair(0.0, engine.currentMaxYBound()));
+				new Pair(0.0, engine.currentMaxY()));
 
 		g2d.drawLine((int)xAxisBegin.x, (int)xAxisBegin.y, (int)xAxisEnd.x, (int)xAxisEnd.y);
 		g2d.drawLine((int)yAxisBegin.x, (int)yAxisBegin.y, (int)yAxisEnd.x, (int)yAxisEnd.y);
 	}
 
-	private void plotFunction(Graphics2D g2d) {
+	private void drawFunction(Graphics2D g2d) {
 		g2d.setColor(Color.BLUE);
 		
-		if (engine.getCurrentFunctionText() == null) {
+		if (engine.getCurrentFunctionPairs() == null || engine.getCurrentFunctionPairs().isEmpty()) {
 			g2d.drawString("Use the button to insert a function", 56, 40);
 			g2d.drawOval(-7, -7, 34, 34);
 			g2d.drawLine(10, 27, 10, 37);
@@ -94,24 +98,16 @@ public class PlottingArea extends JComponent {
 			return;
 		}
 		
-		converter.logicalBounds(engine.currentMaxXBound(), engine.currentMaxYBound());
-		converter.screenSize(this.getWidth(), this.getHeight());
+		converter.logicalBounds(engine.currentMinX(), engine.currentMaxX(), 
+								engine.currentMinY(), engine.currentMaxY());
+		converter.screenSize(this.getWidth(), this.getHeight(), PLOTTING_AREA_PADDING);
 		
-		// Plots all the points in the function interval.
-		double x = engine.currentMinXBound();
-		Pair logicalPoint = new Pair(Double.MIN_VALUE, Double.MIN_VALUE);
-		while (x <= engine.currentMaxXBound()) {
-
-			logicalPoint.x = x;
-			logicalPoint.y = engine.evaluateCurrentFunctionFor(x);
-			
-			Pair point = converter.toScreenCoordinate(logicalPoint);		
-			
+		for (Pair p : engine.getCurrentFunctionPairs()) {
+			Pair point = converter.toScreenCoordinate(p);
 			// A point is represented by a "zero-sized line"
 			g2d.drawLine((int)point.x, (int)point.y, (int)point.x, (int)point.y);
-			
-			x = x + PlotEngine.PLOTTING_X_STEP;
 		}
+
 	}
 	
 	private class PlottingAreaMouseListener implements MouseListener, MouseMotionListener {
