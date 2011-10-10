@@ -1,16 +1,65 @@
-TODO: Fill the help file
+JRPlot, a simple graph plotting tool.
 
-nonono no no nnonononononon no nono nononoonno nono
-nonono  nonnono no no non onon ono nooo ononnonnnonnonononon
-nononnono.
+HELP:
 
-non ono non onono non on on
--> nonononon
--> no nono on on
--> nonono non ono non on o no n
+To plot the graph of a function, just follow these steps:
+1) Type the function expression on the "f(x)=" box.
+2) Choose the interval of "x" values to which the function will be applied.
+3) Click the "OK" butotn.
 
-nonononono?
-nononon ono no n on ono no n 
-nonono no no nnonononononon no nono nononoonno nono
-nonono  nonnono no no non onon ono nooo ononnonnnonnonononon
-nononnono.
+
+*** Function syntax: ***
+
+Just use the regular expression syntax, such as:
+---> x
+---> 2*PI*x
+---> (x^2.5)+1
+---> sin(x)/3
+---> exp( cos(x^2 + 1) )
+
+Note that:
+
+1) The expressions are made of:
+- Value tokens, such as numbers and math constants (PI and E)
+- Operators: +  -  *  /  ^
+- Functions, for example: sin(a) , min(a,b) . A complete list of supported
+functions is given below.
+- Parenthesis for grouping and function aplying.
+
+2) Whitespaces are ignored.
+
+3) Implicit multiplication is supported. For example:
+---> "2x" is the same as "2 * x".
+---> 3(x^2 + 1) is the same as "3 * (x^2 + 1)".
+---> xsin(PI) is not valid, because the "xsin" would be read as a single token. 
+
+
+*** Supported math functions *** 
+
+(case insensitive)
+
+ABS(a)
+ACOS(a)
+ASIN(a)
+ATAN(a)
+COS(a)
+EXP(a)
+LOG(a)
+LOGTEN(a)
+MIN(a, b)
+MAX(a, b)
+SIN(a)
+SQRT(a)
+TAN(a)
+
+
+
+__________________________
+ABOUT
+
+This software is free to use, distribute and modify for EDUCATIONAL PURPOSES ONLY.
+This software is provided without any warranty.
+
+@author: Rodrigo Gomes (gomesrod @ yahoo . com . br)
+
+Sources available at: https://github.com/gomesrod/JRPlot

@@ -52,6 +52,8 @@ public class FunctionInput extends JPanel {
 //		this.setLayout(new BorderLayout());
 		JPanel container = createControlsContainer();
 		this.add(container);
+		
+		txtFunction.requestFocusInWindow();
 	}
 
 	private JPanel createControlsContainer() {
@@ -128,9 +130,8 @@ public class FunctionInput extends JPanel {
 				String minXtext = FunctionInput.this.txtMinX.getText();
 				String maxXtext = FunctionInput.this.txtMaxX.getText();
 				try {
-					//TODO Validate the consistency of minX e maxX
 					FunctionInput.this.engine.updateFunction(functionText, 
-							Double.valueOf(minXtext), Double.parseDouble(maxXtext));
+							PlotEngine.toNumber(minXtext), PlotEngine.toNumber(maxXtext));
 				} catch (ExpressionException e1) {
 					lbErros.setText(e1.getMessage());
 					return;

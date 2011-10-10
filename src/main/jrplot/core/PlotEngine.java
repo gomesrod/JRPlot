@@ -9,8 +9,10 @@ import jrplot.core.expression.ExpressionException;
 
 /**
  * Encapsulates the expression parsing and chart plotting calculations.
- * This should be the only core class acessed by the view components.
+ * Objects of this class provide a single interface for all the operations required
+ * by the view components.
  * <br />
+ * 
  * Thread safety: This class is not threa-safe, if clients are working with different functions.
  * Some values from the last plotted function are stored in each instance.
  * 
@@ -164,5 +166,29 @@ public class PlotEngine {
 				scaleInterval = 1000;
 			}
 		}
+	}
+
+	/**
+	 * Converts the text into a number, checking if it is a literal value or a constant.
+	 * @param text
+	 * @return
+	 * @throws ExpressionException 
+	 */
+	public static double toNumber(String text) throws ExpressionException {
+		try {
+			double val = Double.parseDouble(text);
+			return val;
+		} catch (NumberFormatException e) {
+			// Falls through this exception, and tries to parse as a constant.
+		}
+		
+		try {
+			Expression exp = Expression.parse(text);
+			return exp.evaluate();
+		} catch (ExpressionException e) {
+			// The value is surely an invalid number!
+		}
+		
+		throw new ExpressionException("Invalid value: " + text);
 	}
 }

@@ -8,6 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.math.BigDecimal;
 
 import javax.swing.JComponent;
 
@@ -22,7 +23,7 @@ public class PlottingArea extends JComponent {
 
 	private static final long serialVersionUID = 8064542678184519324L;
 	
-	private static final double PLOTTING_AREA_PADDING = 6.0;
+	private static final double PLOTTING_AREA_PADDING = 10.0;
 
 	/**
 	 * How frequent the scale marks will have labels.
@@ -53,7 +54,7 @@ public class PlottingArea extends JComponent {
 	}
 	
 	/**
-	 * Draws the configuration function button.
+	 * Draws the control button.
 	 * @param g2d
 	 */
 	private void renderButton(Graphics2D g2d) {
@@ -79,43 +80,106 @@ public class PlottingArea extends JComponent {
 								engine.currentMinY(), engine.currentMaxY());
 		converter.screenSize(this.getWidth(), this.getHeight(), PLOTTING_AREA_PADDING);
 		
-		Pair xAxisBegin = converter.toScreenCoordinate(
-				new Pair(engine.currentMinX(), 0.0));
-		Pair xAxisEnd = converter.toScreenCoordinate(
-				new Pair(engine.currentMaxX(), 0.0));
-		
-		Pair yAxisBegin = converter.toScreenCoordinate(
-				new Pair(0.0, engine.currentMinY()));
-		Pair yAxisEnd = converter.toScreenCoordinate(
-				new Pair(0.0, engine.currentMaxY()));
+		Pair origin = converter.toScreenCoordinate(
+				new Pair(0.0, 0.0));
 
-		g2d.drawLine((int)xAxisBegin.x, (int)xAxisBegin.y, (int)xAxisEnd.x, (int)xAxisEnd.y);
-		g2d.drawLine((int)yAxisBegin.x, (int)yAxisBegin.y, (int)yAxisEnd.x, (int)yAxisEnd.y);
+		g2d.drawLine(0, (int)origin.y, this.getWidth(), (int)origin.y);
+		g2d.drawLine((int)origin.x, 0, (int)origin.x, this.getHeight());
 		
 		/*
 		 * Scale marks and labels
 		 */
 		if (engine.getCurrentFunctionPairs() == null || engine.getCurrentFunctionPairs().isEmpty()) {
-			return; // No function defined, scales do not exist.
+			return;
 		}
 		
-		g2d.setFont(new Font("Arial", Font.PLAIN, 8));
+		g2d.setFont(new Font("Arial", Font.PLAIN, 9));
 		
-		Pair scalePoint = new Pair(engine.scaleIntervalX(), 0.0);
-		int labelCounter = 0;
-		while (scalePoint.x <= engine.currentMaxX()) {
+		/*
+		 * In this method we will work with BigDecimal numbers; they look better on screen
+		 * because of the precision issues found on Double numbers.
+		 * That shouldn't harm performance, as this iteraction is pretty short.
+		 *  
+		 */
+		BigDecimal startingX = BigDecimal.valueOf(engine.scaleIntervalX());
+		// Adding a small offset so that the double imprecision does not "drop" the end of scale
+		BigDecimal xBound = BigDecimal.valueOf(engine.currentMaxX() + 0.001);
+		BigDecimal xStep = BigDecimal.valueOf(engine.scaleIntervalX());
+		drawScaleMarksX(g2d, startingX, xBound, xStep, false);
+		
+		startingX = BigDecimal.valueOf(engine.scaleIntervalX()).negate();
+		xBound = BigDecimal.valueOf(engine.currentMinX() - 0.001);
+		drawScaleMarksX(g2d, startingX, xBound, xStep, true);
+		
+		BigDecimal startingY = BigDecimal.valueOf(engine.scaleIntervalY());
+		BigDecimal yBound = BigDecimal.valueOf(engine.currentMaxY() + 0.001);
+		BigDecimal yStep = BigDecimal.valueOf(engine.scaleIntervalY());
+		drawScaleMarksY(g2d, startingY, yBound, yStep, false);
+		
+		startingY = BigDecimal.valueOf(engine.scaleIntervalY()).negate();
+		yBound = BigDecimal.valueOf(engine.currentMinY() - 0.001);
+		drawScaleMarksY(g2d, startingY, yBound, yStep, true);
+	}
+
+	/**
+	 * 
+	 * @param g2d
+	 * @param startingX
+	 * @param xBound
+	 * @param xStep
+	 * @param descending 
+	 */
+	private void drawScaleMarksX(Graphics2D g2d, BigDecimal startingX,
+			BigDecimal xBound, BigDecimal xStep, boolean descending) {
+		Pair scalePoint = new Pair(0.0, 0.0);
+		BigDecimal x = startingX;
+		int labelCounter = 1;
+		while ((!descending && x.compareTo(xBound) <= 0)
+				|| (descending && x.compareTo(xBound) >= 0)) {
+			scalePoint.x = x.doubleValue();
 			Pair converted = converter.toScreenCoordinate(scalePoint);
 			
 			if (labelCounter == LABELED_SCALE_INTERVAL) {
-				g2d.drawLine((int)converted.x, (int)converted.y - 3, (int)converted.x, (int)converted.y + 3);
-				g2d.drawString(String.valueOf(scalePoint.x), (int)converted.x, (int)converted.y + 10);
-				labelCounter = 0;
+				g2d.drawLine((int)converted.x, (int)converted.y - 4, (int)converted.x, (int)converted.y + 4);
+				g2d.drawString(String.valueOf(x), (int)converted.x - 5, (int)converted.y + 15);
+				labelCounter = 1;
 			} else {
 				g2d.drawLine((int)converted.x, (int)converted.y - 2, (int)converted.x, (int)converted.y + 2);
 				labelCounter++;
 			}
 			
-			scalePoint.x = scalePoint.x + engine.scaleIntervalX();
+			if (descending) {
+				x = x.subtract(xStep);
+			} else {
+				x = x.add(xStep);
+			}
+		}
+	}
+	
+	private void drawScaleMarksY(Graphics2D g2d, BigDecimal startingY,
+			BigDecimal yBound, BigDecimal yStep, boolean descending) {
+		Pair scalePoint = new Pair(0.0, 0.0);
+		BigDecimal y = startingY;
+		int labelCounter = 1;
+		while ((!descending && y.compareTo(yBound) <= 0)
+				|| (descending && y.compareTo(yBound) >= 0)) {
+			scalePoint.y = y.doubleValue();
+			Pair converted = converter.toScreenCoordinate(scalePoint);
+			
+			if (labelCounter == LABELED_SCALE_INTERVAL) {
+				g2d.drawLine((int)converted.x - 4, (int)converted.y, (int)converted.x + 4, (int)converted.y);
+				g2d.drawString(String.valueOf(y), (int)converted.x - 23, (int)converted.y + 2);
+				labelCounter = 1;
+			} else {
+				g2d.drawLine((int)converted.x - 2, (int)converted.y, (int)converted.x + 3, (int)converted.y);
+				labelCounter++;
+			}
+			
+			if (descending) {
+				y = y.subtract(yStep);
+			} else {
+				y = y.add(yStep);
+			}
 		}
 	}
 

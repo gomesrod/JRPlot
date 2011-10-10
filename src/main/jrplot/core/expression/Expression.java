@@ -2,9 +2,11 @@ package jrplot.core.expression;
 
 import java.util.ArrayList;
 import java.util.EmptyStackException;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.Stack;
 
 public class Expression {
@@ -13,6 +15,7 @@ public class Expression {
 	 * Represents the function tokens, in Reverse Polish Notation.
 	 */
 	private Queue<ExpressionElement> expressionElements;
+	private Set<String> neededVariables;
 	
 	/**
 	 * Forbid direct instantiation. The parse method must be used.
@@ -30,6 +33,7 @@ public class Expression {
 	public static Expression parse(String expressionText) throws ExpressionException {
 		Queue<ExpressionElement> outputQueue = new LinkedList<ExpressionElement>();
 		Stack<ExpressionElement> auxStack = new Stack<ExpressionElement>();
+		Set<String> vars = new HashSet<String>();
 		
 		String[] tokens = splitInTokens(expressionText);
 		ExpressionElement previousToken = null;
@@ -40,6 +44,11 @@ public class Expression {
 			}
 			
 			ExpressionElement evaluatedTok = handleToken(outputQueue, auxStack, tok);
+			
+			if (evaluatedTok instanceof Variable) {
+				vars.add(((Variable)evaluatedTok).name);
+			}
+			
 			previousToken = evaluatedTok;
 		}
 		
@@ -58,6 +67,7 @@ public class Expression {
 		
 		Expression exp = new Expression();
 		exp.expressionElements = outputQueue;
+		exp.neededVariables = vars;
 		return exp;
 	}
 
@@ -291,6 +301,20 @@ public class Expression {
 		
 		return finalResult;
 		
+	}
+	
+	/**
+	 * Evaluates the current expression, without providing any variable.
+	 * If a variable is needed, the method will throw an exception.
+	 * 
+	 * @return
+	 * @throws ExpressionException
+	 */
+	public double evaluate() throws ExpressionException {
+		if (!this.neededVariables.isEmpty()) {
+			throw new ExpressionException("The expression contains variables");
+		}
+		return evaluate(0.0); // The expression does not contain variables, so this value will be ignored. 
 	}
 	
 	private static boolean isNumber(String tok) throws ExpressionException {
