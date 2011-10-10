@@ -31,8 +31,8 @@ public class FunctionInput extends JPanel {
 
 	private static final long serialVersionUID = -1037545325435699582L;
 	
-	private static final String DEFAULT_X_MIN = "-10.0";
-	private static final String DEFAULT_X_MAX = "10.0";
+	private static final String DEFAULT_X_MIN = "-5.0";
+	private static final String DEFAULT_X_MAX = "5.0";
 	
 	private PlotEngine engine;
 	private JPlotUI controller;

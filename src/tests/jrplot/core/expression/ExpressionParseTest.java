@@ -118,13 +118,29 @@ public class ExpressionParseTest {
 	}
 	
 	@Test
-	public void complex_expressions() throws ExpressionException {
-		Expression exp = Expression.parse("min(x^2, x^3)*(7+x/2)");
-		assertEquals("x 2.0 ^ x 3.0 ^ MIN 7.0 x 2.0 / + * ", exp.toString());
-		assertEquals(144.0, exp.evaluate(4), DBL_COMPARE_DELTA);
+	public void implicit_multiplication() throws ExpressionException {
+		Expression exp = Expression.parse("5x");
+		assertEquals("5.0 x * ", exp.toString());
+		assertEquals(45.0, exp.evaluate(9), DBL_COMPARE_DELTA);
 		
-		exp = Expression.parse("exp( cos(x^2 + 1) )");
+		exp = Expression.parse("2cos(x)");
+		assertEquals("2.0 x COS * ", exp.toString());
+		assertEquals(-2.0, exp.evaluate(Math.PI), DBL_COMPARE_DELTA);
+		
+		exp = Expression.parse("x(1 + x)");
+		assertEquals("x 1.0 x + * ", exp.toString());
+		assertEquals(90.0, exp.evaluate(9), DBL_COMPARE_DELTA);
+	}
+	
+	@Test
+	public void complex_expressions() throws ExpressionException {
+		Expression exp = Expression.parse("exp( cos(x^2 + 1) )");
 		assertEquals("x 2.0 ^ 1.0 + COS EXP ", exp.toString());
 		assertEquals(0.43211154023488678847355411770506, exp.evaluate(3), DBL_COMPARE_DELTA);
+
+		exp = Expression.parse("5min(x^2, x^3)*x(7+x/2)");
+		assertEquals("5.0 x 2.0 ^ x 3.0 ^ MIN * x * 7.0 x 2.0 / + * ", exp.toString());
+		assertEquals(2880.0, exp.evaluate(4), DBL_COMPARE_DELTA);
 	}
+	
 }

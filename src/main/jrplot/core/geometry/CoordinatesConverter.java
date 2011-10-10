@@ -109,8 +109,8 @@ public class CoordinatesConverter {
 		double xDist = p.x - logicalXBoundMin;
 		double yDist = logicalYBoundMax - p.y;
 		
-		double cartAxisWidth = Math.abs(logicalXBoundMin) + Math.abs(logicalXBoundMax);
-		double cartAxisHeigth = Math.abs(logicalYBoundMin) + Math.abs(logicalYBoundMax);
+		double cartAxisWidth = logicalXBoundMax - logicalXBoundMin;
+		double cartAxisHeigth = logicalYBoundMax - logicalYBoundMin;
 		
 		// Gets the proportional screen distances
 		double drawableWidth = screenWidth - (2 * screenPadding);

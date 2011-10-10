@@ -2,6 +2,7 @@ package jrplot.ui;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
@@ -22,6 +23,11 @@ public class PlottingArea extends JComponent {
 	private static final long serialVersionUID = 8064542678184519324L;
 	
 	private static final double PLOTTING_AREA_PADDING = 6.0;
+
+	/**
+	 * How frequent the scale marks will have labels.
+	 */
+	private static final int LABELED_SCALE_INTERVAL = 5;
 	
 	private PlotEngine engine;
 	private JPlotUI controller;
@@ -85,6 +91,32 @@ public class PlottingArea extends JComponent {
 
 		g2d.drawLine((int)xAxisBegin.x, (int)xAxisBegin.y, (int)xAxisEnd.x, (int)xAxisEnd.y);
 		g2d.drawLine((int)yAxisBegin.x, (int)yAxisBegin.y, (int)yAxisEnd.x, (int)yAxisEnd.y);
+		
+		/*
+		 * Scale marks and labels
+		 */
+		if (engine.getCurrentFunctionPairs() == null || engine.getCurrentFunctionPairs().isEmpty()) {
+			return; // No function defined, scales do not exist.
+		}
+		
+		g2d.setFont(new Font("Arial", Font.PLAIN, 8));
+		
+		Pair scalePoint = new Pair(engine.scaleIntervalX(), 0.0);
+		int labelCounter = 0;
+		while (scalePoint.x <= engine.currentMaxX()) {
+			Pair converted = converter.toScreenCoordinate(scalePoint);
+			
+			if (labelCounter == LABELED_SCALE_INTERVAL) {
+				g2d.drawLine((int)converted.x, (int)converted.y - 3, (int)converted.x, (int)converted.y + 3);
+				g2d.drawString(String.valueOf(scalePoint.x), (int)converted.x, (int)converted.y + 10);
+				labelCounter = 0;
+			} else {
+				g2d.drawLine((int)converted.x, (int)converted.y - 2, (int)converted.x, (int)converted.y + 2);
+				labelCounter++;
+			}
+			
+			scalePoint.x = scalePoint.x + engine.scaleIntervalX();
+		}
 	}
 
 	private void drawFunction(Graphics2D g2d) {

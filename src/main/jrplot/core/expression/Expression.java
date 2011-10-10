@@ -29,127 +29,207 @@ public class Expression {
 	 */
 	public static Expression parse(String expressionText) throws ExpressionException {
 		Queue<ExpressionElement> outputQueue = new LinkedList<ExpressionElement>();
-		Stack<String> auxStack = new Stack<String>();
+		Stack<ExpressionElement> auxStack = new Stack<ExpressionElement>();
 		
 		String[] tokens = splitInTokens(expressionText);
+		ExpressionElement previousToken = null;
 		
-		/*
-		 * Reference: http://en.wikipedia.org/wiki/Shunting-yard_algorithm
-		 * 
-		 * While there are tokens to be read:
-		 */
 		for (String tok : tokens) {
-			/*
-			 * If the token is a number, then add it to the output queue.
-			 */
-			if (isNumber(tok)) {
-				double val = Double.parseDouble(tok);
-				outputQueue.offer(new Value(val));
-
-			// Note: Variables and constants are also numbers
-			} else if (tok.length() == 1 && Character.isLetter(tok.charAt(0))) {
-				outputQueue.offer(new Variable(tok));
-			
-			} else if (MathConstants.isValid(tok)) {
-				outputQueue.offer(MathConstants.findByName(tok));
-				
-			/*
-			 * If the token is a function token, then push it onto the stack.
-			 */
-			} else if (Function.isValidFunction(tok)) {
-				auxStack.push(tok);
-				
-			/*
-			 * If the token is a function argument separator (e.g., a comma):
-			 * - Until the token at the top of the stack is a left parenthesis, 
-			 * pop operators off the stack onto the output queue. If no left 
-			 * parentheses are encountered, either the separator was misplaced 
-			 * or parentheses were mismatched.
-			 */
-			} else if (",".equals(tok)) {
-				try {
-					while (!"(".equals(auxStack.peek())) {
-						outputQueue.offer(Operator.findBySymbol(auxStack.pop()));
-					}
-				} catch (EmptyStackException e) {
-					throw new ExpressionException(
-						"Malformed expression. A function separator (comma) was used, but there is no starting parenthesis.");
-				}
-			
-			/*
-			 * If the token is an operator, o1, then:
-			 * - while there is an operator token, o2, at the top of the stack, and
-			 *   either o1 is left-associative and its precedence is less than or equal to that of o2,
-			 *   or o1 is right-associative and its precedence is less than that of o2,
-			 * --- pop o2 off the stack, onto the output queue;
-			 * - push o1 onto the stack.
-			 * 
-			 * note: In our code, smaller precedence values mean HIGHER precedence, or higher priority.
-			 */
-			} else if (Operator.isValid(tok)) {
-				Operator o1 = Operator.findBySymbol(tok);
-				
-				while (!auxStack.isEmpty() && Operator.isValid(auxStack.peek())) {
-					Operator o2 = Operator.findBySymbol(auxStack.peek());
-					if ((!o1.isRightAssociative() && o1.getPrecedence() >= o2.getPrecedence())
-							|| (o1.isRightAssociative() && o1.getPrecedence() > o2.getPrecedence())) {
-						auxStack.pop();
-						outputQueue.offer(o2);
-					} else {
-						break;
-					}
-				}
-				
-				auxStack.push(tok);
-				
-				
-			/*
-			 * If the token is a left parenthesis, then push it onto the stack.
-			 */
-			} else if (tok.equals("(")) {
-				auxStack.push("(");
-				
-			/*
-			 * If the token is a right parenthesis:
-			 * - Until the token at the top of the stack is a left parenthesis, 
-			 *   pop operators off the stack onto the output queue.
-			 * - Pop the left parenthesis from the stack, but not onto the output queue.
-			 * - If the token at the top of the stack is a function token, pop it onto the output queue.
-			 * - If the stack runs out without finding a left parenthesis, then there are mismatched parentheses.
-			 * 
-			 */
-			} else if (tok.equals(")")) {
-				try {
-					while (!"(".equals(auxStack.peek())) {
-						outputQueue.offer(Operator.findBySymbol(auxStack.pop()));
-					}
-				} catch (EmptyStackException e) {
-					throw new ExpressionException(
-						"Malformed expression. Unbalanced parenthesis.");
-				}
-				
-				auxStack.pop();
-				if (!auxStack.isEmpty() && Function.isValidFunction(auxStack.peek())) {
-					outputQueue.add(Function.findByName(auxStack.pop()));
-				}
-			
-			} else {
-				throw new ExpressionException("Unrecognized token: " + tok);
+			if (shouldAddImplicitMultiplication(previousToken, tok)) {
+				handleToken(outputQueue, auxStack, "*");
 			}
+			
+			ExpressionElement evaluatedTok = handleToken(outputQueue, auxStack, tok);
+			previousToken = evaluatedTok;
 		}
 		
 		/*
-		 * While there are still operator tokens in the stack:
+		 * ## While there are still operator tokens in the stack:
 		 * If the operator token on the top of the stack is a parenthesis, then there are mismatched parentheses.
 		 * Pop the operator onto the output queue.
 		 */
 		while (!auxStack.isEmpty()) {
-			outputQueue.offer(Operator.findBySymbol(auxStack.pop()));
+			ExpressionElement aux = auxStack.pop();
+			if (!(aux instanceof Operator)) {
+				throw new ExpressionException("Malformed expression");
+			}
+			outputQueue.offer(aux);
 		}
 		
 		Expression exp = new Expression();
 		exp.expressionElements = outputQueue;
 		return exp;
+	}
+
+	/**
+	 * 
+	 * @param previousToken
+	 * @param tok
+	 * @return
+	 */
+	private static boolean shouldAddImplicitMultiplication(
+			ExpressionElement previousToken, String tok) {
+		boolean isValue = previousToken instanceof Value 
+						|| previousToken instanceof Variable 
+						|| previousToken instanceof MathConstants;
+		
+		char first = tok.charAt(0);
+		
+		// Case 1: value followed by alpha token. Ex: 5x, 10sin(...)
+		if (isValue && Character.isLetter(first)) {
+			return true;
+		}
+		
+		// Case 2: value followed by parenthesis. Ex: 3(x^2), x(7+x)
+		if (isValue && first == '(') {
+			return true;
+		}
+		
+		return false;
+	}
+
+	/**
+	 * Evaluates the current expression token according to the Shunting-yard algorithm.
+	 * 
+	 * Reference: http://en.wikipedia.org/wiki/Shunting-yard_algorithm
+	 * 
+	 * @param outputQueue
+	 * @param auxStack
+	 * @param tok
+	 * 
+	 * @return The parsed token, represented by an ExpressionElement instance.
+	 * For "throw-away" tokens, such as comma (","), this method returns null.
+	 * 
+	 * @throws ExpressionException
+	 */
+	private static ExpressionElement handleToken(Queue<ExpressionElement> outputQueue,
+			Stack<ExpressionElement> auxStack, String tok) throws ExpressionException {
+		/*
+		 * ## If the token is a number, then add it to the output queue.
+		 */
+		if (isNumber(tok)) {
+			double val = Double.parseDouble(tok);
+			ExpressionElement evaluatedTok = new Value(val);
+			outputQueue.offer(evaluatedTok);
+			return evaluatedTok;
+		}
+
+		// Note: Variables and constants are also numbers
+		if (tok.length() == 1 && Character.isLetter(tok.charAt(0))) {
+			Variable evaluatedTok = new Variable(tok);
+			outputQueue.offer(evaluatedTok);
+			return evaluatedTok;
+		}
+		
+		if (MathConstants.isValid(tok)) {
+			MathConstants evaluatedTok = MathConstants.findByName(tok);
+			outputQueue.offer(evaluatedTok);
+			return evaluatedTok;
+		}
+		
+		/*
+		 * ## If the token is a function token, then push it onto the stack.
+		 */
+		if (Function.isValidFunction(tok)) {
+			Function evaluatedTok = Function.findByName(tok);
+			auxStack.push(evaluatedTok);
+			return evaluatedTok;
+		}
+		
+		/*
+		 * ## If the token is a function argument separator (e.g., a comma):
+		 * - Until the token at the top of the stack is a left parenthesis, 
+		 * pop operators off the stack onto the output queue. If no left 
+		 * parentheses are encountered, either the separator was misplaced 
+		 * or parentheses were mismatched.
+		 */
+		if (",".equals(tok)) {
+			try {
+				while (auxStack.peek() != Parenthesis.LEFT) {
+					ExpressionElement aux = auxStack.pop();
+					if (!(aux instanceof Operator)) {
+						throw new ExpressionException("Unexpected at this point: " + aux);
+					}
+					outputQueue.offer(aux);
+				}
+			} catch (EmptyStackException e) {
+				throw new ExpressionException(
+					"Malformed expression. A function separator (comma) was used, but there is no starting parenthesis.");
+			}
+
+			return null;
+		}
+		
+		/*
+		 * ## If the token is an operator, o1, then:
+		 * - while there is an operator token, o2, at the top of the stack, and
+		 *   either o1 is left-associative and its precedence is less than or equal to that of o2,
+		 *   or o1 is right-associative and its precedence is less than that of o2,
+		 * --- pop o2 off the stack, onto the output queue;
+		 * - push o1 onto the stack.
+		 * 
+		 * note: In our code, smaller precedence values mean HIGHER precedence, or higher priority.
+		 */
+		if (Operator.isValid(tok)) {
+			Operator o1 = Operator.findBySymbol(tok);
+			
+			while (!auxStack.isEmpty() && (auxStack.peek() instanceof Operator)) {
+				Operator o2 = (Operator) auxStack.peek();
+				if ((!o1.isRightAssociative() && o1.getPrecedence() >= o2.getPrecedence())
+						|| (o1.isRightAssociative() && o1.getPrecedence() > o2.getPrecedence())) {
+					auxStack.pop();
+					outputQueue.offer(o2);
+				} else {
+					break;
+				}
+			}
+			
+			auxStack.push(o1);
+			return o1;
+		}
+			
+		/*
+		 * ## If the token is a left parenthesis, then push it onto the stack.
+		 */
+		if (tok.equals("(")) {
+			auxStack.push(Parenthesis.LEFT);
+			return Parenthesis.LEFT;
+		}
+		
+		/*
+		 * ## If the token is a right parenthesis:
+		 * - Until the token at the top of the stack is a left parenthesis, 
+		 *   pop operators off the stack onto the output queue.
+		 * - Pop the left parenthesis from the stack, but not onto the output queue.
+		 * - If the token at the top of the stack is a function token, pop it onto the output queue.
+		 * - If the stack runs out without finding a left parenthesis, then there are mismatched parentheses.
+		 * 
+		 */
+		if (tok.equals(")")) {
+			try {
+				while (auxStack.peek() != Parenthesis.LEFT) {
+					ExpressionElement aux = auxStack.pop();
+					if (!(aux instanceof Operator)) {
+						throw new ExpressionException("Unexpected at this point: " + aux);
+					}
+					outputQueue.offer(aux);
+				}
+			} catch (EmptyStackException e) {
+				throw new ExpressionException(
+					"Malformed expression. Unbalanced parenthesis.");
+			}
+			
+			auxStack.pop();
+
+			if (!auxStack.isEmpty() && (auxStack.peek() instanceof Function)) {
+				outputQueue.add(auxStack.pop());
+			}
+			
+			return Parenthesis.RIGHT;
+		}
+
+		// Did not fit in any rule above...
+		throw new ExpressionException("Unrecognized token: " + tok);
 	}
 
 	/**
