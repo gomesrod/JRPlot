@@ -1,7 +1,7 @@
 package jrplot.core.expression;
 
 /**
- * Represents a value from an expression.
+ * Represents a literal value from an expression.
  * @author rodrigo
  *
  */

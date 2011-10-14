@@ -47,6 +47,7 @@ public class JPlotUI extends JPanel {
 	void notifyNewFunctionDialogRequested() {
 		CardLayout layout = (CardLayout) this.getLayout();
 		layout.show(this, FUNCTIONINPUT_LAYOUT_KEY);
+		functionInputDialog.notifyFrameActivated();
 	}
 
 	void notifyFunctionInputClosed() {

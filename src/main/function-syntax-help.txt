@@ -10,11 +10,11 @@ To plot the graph of a function, just follow these steps:
 
 *** Function syntax: ***
 
-Just use the regular expression syntax, such as:
+This softwares uses the "standard" expression syntax, such as:
 ---> x
 ---> 2*PI*x
 ---> (x^2.5)+1
----> sin(x)/3
+---> -sin(x)/3
 ---> exp( cos(x^2 + 1) )
 
 Note that:
@@ -31,7 +31,10 @@ functions is given below.
 3) Implicit multiplication is supported. For example:
 ---> "2x" is the same as "2 * x".
 ---> 3(x^2 + 1) is the same as "3 * (x^2 + 1)".
----> xsin(PI) is not valid, because the "xsin" would be read as a single token. 
+---> xsin(PI) is not valid, for the "xsin" would be read as a single token. 
+
+4) Constant expressions (such as PI, -2PI, e) are allowed as the X min or max values.
+
 
 
 *** Supported math functions *** 
@@ -57,7 +60,9 @@ TAN(a)
 __________________________
 ABOUT
 
-This software is free to use, distribute and modify for EDUCATIONAL PURPOSES ONLY.
+JRPlot v0.1
+
+You may use, distribute and modify this software for educational purposes only.
 This software is provided without any warranty.
 
 @author: Rodrigo Gomes (gomesrod @ yahoo . com . br)

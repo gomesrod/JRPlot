@@ -7,8 +7,11 @@ import javax.swing.SwingUtilities;
 
 import jrplot.ui.JPlotUI;
 
-
-
+/**
+ * Application entry point.
+ * @author Rodrigo Gomes
+ *
+ */
 public class RJPlot {
 
 	public static void main(String[] args) {

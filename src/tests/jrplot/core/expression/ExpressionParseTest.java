@@ -143,4 +143,22 @@ public class ExpressionParseTest {
 		assertEquals(2880.0, exp.evaluate(4), DBL_COMPARE_DELTA);
 	}
 	
+	@Test
+	public void negative_constants_functions_and_variables() throws ExpressionException {
+		Expression exp = Expression.parse("-PI");
+		assertEquals("-1.0 PI * ", exp.toString());
+		assertEquals(-Math.PI, exp.evaluate(0.0), DBL_COMPARE_DELTA);
+		
+		exp = Expression.parse("-sqrt(x)");
+		assertEquals("-1.0 x SQRT * ", exp.toString());
+		assertEquals(-5.0, exp.evaluate(25.0), DBL_COMPARE_DELTA);
+		
+		exp = Expression.parse("-(x+1)");
+		assertEquals("-1.0 x 1.0 + * ", exp.toString());
+		assertEquals(-11.0, exp.evaluate(10.0), DBL_COMPARE_DELTA);
+		
+		exp = Expression.parse("2(-x+1)");
+		assertEquals("2.0 -1.0 x * 1.0 + * ", exp.toString());
+		assertEquals(-18.0, exp.evaluate(10.0), DBL_COMPARE_DELTA);
+	}
 }

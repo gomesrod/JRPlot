@@ -21,6 +21,12 @@ import jrplot.core.expression.ExpressionException;
  */
 public class PlotEngine {
 
+	/**
+	 * Values greater than this would not make sense for the user, as there's
+	 * no way to make a so big graph look well on screen.
+	 */
+	private final static double MAX_ALLOWED_VALUE = 100000.0;
+	
 	private String currentFunctionText;
 	private Expression currentFunction;
 	private PrecisionLevel currentPrecisionX;
@@ -62,7 +68,10 @@ public class PlotEngine {
 			throw new ExpressionException("Expression cannot be empty");
 		}
 		if (minX >= maxX) {
-			throw new ExpressionException("Invalid X interval");
+			throw new ExpressionException("Invalid X interval. Min must be smaller than Max");
+		}
+		if (Math.abs(minX) > MAX_ALLOWED_VALUE || Math.abs(maxX) > MAX_ALLOWED_VALUE) {
+			throw new ExpressionException("The absolute value for Min or Max must be less than " + MAX_ALLOWED_VALUE);
 		}
 		
 		this.currentFunction = Expression.parse(expression);
@@ -81,10 +90,20 @@ public class PlotEngine {
 		double x = minX;
 		while(x <= maxX) {
 			double y = currentFunction.evaluate(x);
-			if (y < curMinY) curMinY = y;
-			if (y > curMaxY) curMaxY = y;
 			
-			pairs.add(new Pair(x, y));
+			// Infinite is a common result when the operation is not valid
+			// for the current x (For example, 1/x for x=0).
+			// These values should be ignored as they are not part of the function.
+			if (!Double.isNaN(y) && !Double.isInfinite(y)) {
+				
+				if (y < -MAX_ALLOWED_VALUE) y = -MAX_ALLOWED_VALUE;
+				if (y > MAX_ALLOWED_VALUE) y = MAX_ALLOWED_VALUE;
+				
+				if (y < curMinY) curMinY = y;
+				if (y > curMaxY) curMaxY = y;
+				pairs.add(new Pair(x, y));
+			}
+			
 			x = x + precisionX.xStep;
 		}
 		
@@ -126,6 +145,31 @@ public class PlotEngine {
 		return currentFunctionText;
 	}
 
+
+	/**
+	 * Converts the text into a number, checking if it is a literal value or a constant.
+	 * @param text
+	 * @return
+	 * @throws ExpressionException 
+	 */
+	public static double toNumber(String text) throws ExpressionException {
+		try {
+			double val = Double.parseDouble(text);
+			return val;
+		} catch (NumberFormatException e) {
+			// Falls through this exception, and tries to parse as a constant.
+		}
+		
+		try {
+			Expression exp = Expression.parse(text);
+			return exp.evaluate();
+		} catch (ExpressionException e) {
+			// The value is surely an invalid number!
+		}
+		
+		throw new ExpressionException("Invalid value: " + text);
+	}
+	
 	/**
 	 * Holds the data that correspond to the precision level of the reqested function.
 	 * 
@@ -168,27 +212,4 @@ public class PlotEngine {
 		}
 	}
 
-	/**
-	 * Converts the text into a number, checking if it is a literal value or a constant.
-	 * @param text
-	 * @return
-	 * @throws ExpressionException 
-	 */
-	public static double toNumber(String text) throws ExpressionException {
-		try {
-			double val = Double.parseDouble(text);
-			return val;
-		} catch (NumberFormatException e) {
-			// Falls through this exception, and tries to parse as a constant.
-		}
-		
-		try {
-			Expression exp = Expression.parse(text);
-			return exp.evaluate();
-		} catch (ExpressionException e) {
-			// The value is surely an invalid number!
-		}
-		
-		throw new ExpressionException("Invalid value: " + text);
-	}
 }

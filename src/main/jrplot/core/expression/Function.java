@@ -2,9 +2,9 @@ package jrplot.core.expression;
 
 
 /**
- * Contains the basic math functions.
+ * Representation of a math function.
  *  
- * @author rodrigo
+ * @author Rodrigo Gomes
  *
  */
 enum Function implements Evaluable {
@@ -128,9 +128,9 @@ enum Function implements Evaluable {
 		return false;
 	}
 	
-	/**
-	 * 
-	 * @return
+	/*
+	 * (non-Javadoc)
+	 * @see jrplot.core.expression.Evaluable#isUnary()
 	 */
 	public boolean isUnary() {
 		return unary;

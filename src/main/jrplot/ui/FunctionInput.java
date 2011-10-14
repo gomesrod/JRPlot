@@ -49,17 +49,21 @@ public class FunctionInput extends JPanel {
 		this.engine = engine;
 		this.controller = controller;
 		
-//		this.setLayout(new BorderLayout());
 		JPanel container = createControlsContainer();
 		this.add(container);
-		
-		txtFunction.requestFocusInWindow();
 	}
 
+	/**
+	 * 
+	 */
+	public void notifyFrameActivated() {
+		txtFunction.requestFocusInWindow();
+	}
+	
 	private JPanel createControlsContainer() {
 		JPanel container = new JPanel(new GridBagLayout());
 		
-		container.setPreferredSize(new Dimension(300, 200));
+		container.setPreferredSize(new Dimension(400, 300));
 		
 		GridBagConstraints constr = new GridBagConstraints();
 		constr.anchor = GridBagConstraints.CENTER;

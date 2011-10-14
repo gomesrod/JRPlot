@@ -9,12 +9,44 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 
+/**
+ * Representation of an evaluable math expression.
+ * It internally stores the expression components as objects in a Queue,
+ * according to the Reverse Polish Notation.
+ * 
+ * <br /><br />
+ * Usage:
+ * <br />
+ * <code>
+ * Expression exp = Expression.parse("sin(PI)");
+ * double result = exp.evaluate();
+ * </code>
+ * <br />
+ * Or using a "x" variable:
+ * <br />
+ * <code>
+ * Expression exp = Expression.parse("2x + 1");
+ * double result = exp.evaluate(3.0); // x will be replaced with 3.0
+ * </code>
+ * 
+ * <br /><br />
+ * A complete reference for supported syntax and functions is available on the
+ * application help file.
+ * 
+ * @author Rodrigo Gomes
+ *
+ */
 public class Expression {
 
 	/**
 	 * Represents the function tokens, in Reverse Polish Notation.
 	 */
 	private Queue<ExpressionElement> expressionElements;
+	
+	/**
+	 * Used for validation when evaluating the expression. The method will
+	 * check if all the needed variables were supplied.
+	 */
 	private Set<String> neededVariables;
 	
 	/**
@@ -39,11 +71,22 @@ public class Expression {
 		ExpressionElement previousToken = null;
 		
 		for (String tok : tokens) {
+			boolean skip = false;
+			ExpressionElement evaluatedTok = null;
+			
 			if (shouldAddImplicitMultiplication(previousToken, tok)) {
 				handleToken(outputQueue, auxStack, "*");
 			}
+
+			if (isNegatingNextToken(previousToken, tok)) {
+				handleToken(outputQueue, auxStack, "-1.0");
+				evaluatedTok = handleToken(outputQueue, auxStack, "*");
+				skip = true;
+			}
 			
-			ExpressionElement evaluatedTok = handleToken(outputQueue, auxStack, tok);
+			if (!skip) {
+				evaluatedTok = handleToken(outputQueue, auxStack, tok);
+			}
 			
 			if (evaluatedTok instanceof Variable) {
 				vars.add(((Variable)evaluatedTok).name);
@@ -69,6 +112,20 @@ public class Expression {
 		exp.expressionElements = outputQueue;
 		exp.neededVariables = vars;
 		return exp;
+	}
+
+	/**
+	 * Handle negative constants and functions, such as -PI, -sin(x), -(x+1).
+	 * @param previousToken
+	 * @param tok
+	 * @return
+	 */
+	private static boolean isNegatingNextToken(
+			ExpressionElement previousToken, String tok) {
+		
+		boolean shouldNeg = (previousToken == null || previousToken == Parenthesis.LEFT) 
+							&& "-".equals(tok);
+		return shouldNeg;
 	}
 
 	/**
@@ -123,16 +180,14 @@ public class Expression {
 			outputQueue.offer(evaluatedTok);
 			return evaluatedTok;
 		}
-
-		// Note: Variables and constants are also numbers
-		if (tok.length() == 1 && Character.isLetter(tok.charAt(0))) {
-			Variable evaluatedTok = new Variable(tok);
+		// Variables and constants are also numbers
+		if (MathConstants.isValid(tok)) {
+			MathConstants evaluatedTok = MathConstants.findByName(tok);
 			outputQueue.offer(evaluatedTok);
 			return evaluatedTok;
 		}
-		
-		if (MathConstants.isValid(tok)) {
-			MathConstants evaluatedTok = MathConstants.findByName(tok);
+		if (tok.length() == 1 && Character.isLetter(tok.charAt(0))) {
+			Variable evaluatedTok = new Variable(tok);
 			outputQueue.offer(evaluatedTok);
 			return evaluatedTok;
 		}

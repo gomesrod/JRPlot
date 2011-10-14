@@ -2,7 +2,7 @@ package jrplot.core.expression;
 
 /**
  * Exceptions generated when parsing or evaluating an expression.
- * @author rodrigo
+ * @author Rodrigo Gomes
  */
 public class ExpressionException extends Exception {
 

@@ -2,7 +2,8 @@ package jrplot.core.expression;
 
 /**
  * Represents a variable, or a unknown value from an expression.
- * @author rodrigo
+ * 
+ * @author Rodrigo Gomes
  *
  */
 class Variable implements ExpressionElement {

@@ -17,8 +17,11 @@ import jrplot.core.PlotEngine;
 import jrplot.core.geometry.CoordinatesConverter;
 
 
-
-
+/**
+ * Graph drawing canvas.
+ * 
+ * @author Rodrigo Gomes
+ */
 public class PlottingArea extends JComponent {
 
 	private static final long serialVersionUID = 8064542678184519324L;
@@ -141,7 +144,15 @@ public class PlottingArea extends JComponent {
 			
 			if (labelCounter == LABELED_SCALE_INTERVAL) {
 				g2d.drawLine((int)converted.x, (int)converted.y - 4, (int)converted.x, (int)converted.y + 4);
-				g2d.drawString(String.valueOf(x), (int)converted.x - 5, (int)converted.y + 15);
+				
+				// If the axis is closer to the bottom of the screen, write the labels above the axis.
+				boolean writeLabelsAbove = (converted.y > (this.getHeight() - 20));
+
+				if (writeLabelsAbove) {
+					g2d.drawString(String.valueOf(x), (int)converted.x - 5, (int)converted.y - 10);
+				} else {
+					g2d.drawString(String.valueOf(x), (int)converted.x - 5, (int)converted.y + 15);
+				}
 				labelCounter = 1;
 			} else {
 				g2d.drawLine((int)converted.x, (int)converted.y - 2, (int)converted.x, (int)converted.y + 2);
@@ -165,10 +176,19 @@ public class PlottingArea extends JComponent {
 				|| (descending && y.compareTo(yBound) >= 0)) {
 			scalePoint.y = y.doubleValue();
 			Pair converted = converter.toScreenCoordinate(scalePoint);
-			
+						
 			if (labelCounter == LABELED_SCALE_INTERVAL) {
 				g2d.drawLine((int)converted.x - 4, (int)converted.y, (int)converted.x + 4, (int)converted.y);
-				g2d.drawString(String.valueOf(y), (int)converted.x - 23, (int)converted.y + 2);
+				
+				// If the axis is closer to the left edge of the screen, write the labels on the right.
+				boolean writeLabelsOnRight = (converted.x < 30);
+				
+				if (writeLabelsOnRight) {
+					g2d.drawString(String.valueOf(y), (int)converted.x + 10, (int)converted.y + 2);
+				} else {
+					g2d.drawString(String.valueOf(y), (int)converted.x - 25, (int)converted.y + 2);
+				}
+				
 				labelCounter = 1;
 			} else {
 				g2d.drawLine((int)converted.x - 2, (int)converted.y, (int)converted.x + 3, (int)converted.y);

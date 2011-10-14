@@ -2,7 +2,7 @@ package jrplot.core.expression;
 
 
 /**
- * Represents a function, or an operator.
+ * Represents an operator.
  *  
  * @author rodrigo
  *
@@ -98,9 +98,9 @@ enum Operator implements Evaluable {
 		return false;
 	}
 	
-	/**
-	 * 
-	 * @return
+	/*
+	 * (non-Javadoc)
+	 * @see jrplot.core.expression.Evaluable#isUnary()
 	 */
 	public boolean isUnary() {
 		return unary;
